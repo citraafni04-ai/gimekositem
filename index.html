@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="id">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Petualangan Ekosistem</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Fraunces:wght@600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+        body { font-family: 'DM Sans', sans-serif; }
+        .heading-font { font-family: 'Fraunces', serif; }
+        .view { display: none; }
+        .view.active { display: block; }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        @keyframes confettiFall { 0% { transform: translateY(-100%) rotate(0deg); opacity: 1; } 100% { transform: translateY(calc(100 * min(var(--vh,1vh),1vh))) rotate(720deg); opacity: 0; } }
+        .animate-in { animation: fadeSlideUp 0.5s ease-out forwards; }
+        .animate-shake { animation: shake 0.4s ease; }
+        .animate-pulse { animation: pulse 0.4s ease; }
+        .confetti-piece { position: fixed; top: -20px; width: 10px; height: 10px; z-index: 1000; animation: confettiFall 3s ease-out forwards; pointer-events: none; }
+        .drag-item { touch-action: none; user-select: none; cursor: grab; }
+        .drag-item.dragging { opacity: 0.5; cursor: grabbing; }
+        .drop-zone.drag-over { outline: 3px dashed #f9c74f; background: rgba(249,199,79,0.1); }
+        .drop-zone { min-height: 120px; }
+        .match-term, .match-def { cursor: pointer; transition: all 0.2s; }
+        .match-term.selected { outline: 3px solid #f9c74f; transform: scale(1.03); }
+        .match-term.matched, .match-def.matched { opacity: 0.7; pointer-events: none; }
+        .quiz-option { cursor: pointer; transition: all 0.2s; }
+        .quiz-option:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .quiz-option.correct { background: #d4edda !important; border-color: #28a745 !important; }
+        .quiz-option.incorrect { background: #f8d7da !important; border-color: #dc3545 !important; }
+        .quiz-option.disabled { pointer-events: none; }
+        .progress-step { transition: all 0.4s; }
+        .progress-step.completed { background: #40916c; color: white; }
+        .progress-step.current { background: #f9c74f; color: #1b4332; font-weight: 700; }
+        .tab-btn.active { background: #40916c; color: white; }
+        .cert-card { border: 8px double #2d6a4f; position: relative; overflow: hidden; }
+    </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen w-full"><!-- Progress Bar -->
+  <nav id="progress-bar" class="sticky top-0 z-50 bg-white/90 backdrop-blur shadow-sm px-4 py-3 hidden">
+   <div class="max-w-3xl mx-auto flex items-center gap-1 text-xs font-medium">
+    <div class="progress-step px-3 py-1 rounded-full bg-gray-200 text-gray-600" data-step="0">
+     Mulai
+    </div>
+    <div class="h-0.5 flex-1 bg-gray-200">
+     <div class="h-full bg-green-600 transition-all" style="width:0%"></div>
+    </div>
+    <div class="progress-step px-3 py-1 rounded-full bg-gray-200 text-gray-600" data-step="1">
+     Materi
+    </div>
+    <div class="h-0.5 flex-1 bg-gray-200">
+     <div class="h-full bg-green-600 transition-all" style="width:0%"></div>
+    </div>
+    <div class="progress-step px-3 py-1 rounded-full bg-gray-200 text-gray-600" data-step="2">
+     Level 1
+    </div>
+    <div class="h-0.5 flex-1 bg-gray-200">
+     <div class="h-full bg-green-600 transition-all" style="width:0%"></div>
+    </div>
+    <div class="progress-step px-3 py-1 rounded-full bg-gray-200 text-gray-600" data-step="3">
+     Level 2
+    </div>
+    <div class="h-0.5 flex-1 bg-gray-200">
+     <div class="h-full bg-green-600 transition-all" style="width:0%"></div>
+    </div>
+    <div class="progress-step px-3 py-1 rounded-full bg-gray-200 text-gray-600" data-step="4">
+     Level 3
+    </div>
+    <div class="h-0.5 flex-1 bg-gray-200">
+     <div class="h-full bg-green-600 transition-all" style="width:0%"></div>
+    </div>
+    <div class="progress-step px-3 py-1 rounded-full bg-gray-200 text-gray-600" data-step="5">
+     Hasil
+    </div>
+   </div>
+  </nav><!-- VIEW: HOME -->
+  <section id="view-home" class="view active">
+   <div class="relative w-full" style="min-height:calc(100 * min(var(--vh,1vh),1vh))">
+    <div class="absolute inset-0"><img data-template-id="hero-img" class="canva-image w-full h-full object-cover" loading="lazy">
+     <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-[#1b4332]"></div>
+    </div>
+    <div class="relative z-10 flex flex-col items-center justify-center text-center px-6 py-20" style="min-height:calc(100 * min(var(--vh,1vh),1vh))">
+     <div class="animate-in">
+      <h1 data-template-id="home-title" class="canva-text heading-font text-white drop-shadow-lg mb-3"></h1>
+      <p data-template-id="home-subtitle" class="canva-text text-green-200 mb-4"></p>
+      <p data-template-id="home-description" class="canva-text text-white/80 max-w-lg mx-auto mb-10"></p><button data-template-id="btn-mulai" class="canva-button px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition-transform" onclick="goTo(1)"></button>
+     </div>
+    </div>
+   </div>
+  </section><!-- VIEW: MATERI -->
+  <section id="view-materi" class="view">
+   <div class="max-w-3xl mx-auto px-4 py-8">
+    <h2 data-template-id="materi-title" class="canva-text heading-font text-center mb-6"></h2><!-- Tabs -->
+    <div class="flex flex-wrap gap-2 justify-center mb-6" id="materi-tabs"><button class="tab-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 transition" onclick="showTab(0)">Pengertian</button> <button class="tab-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 transition" onclick="showTab(1)">Jenis</button> <button class="tab-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 transition" onclick="showTab(2)">Rantai Makanan</button> <button class="tab-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 transition" onclick="showTab(3)">Jaring Makanan</button> <button class="tab-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 transition" onclick="showTab(4)">Keseimbangan</button>
+    </div><!-- Tab 0 -->
+    <div class="tab-panel bg-white rounded-2xl shadow-lg p-6 mb-6 hidden">
+     <h3 data-template-id="materi-section1-title" class="canva-text heading-font mb-3"></h3>
+     <p data-template-id="materi-section1-text" class="canva-text leading-relaxed"></p><img data-template-id="materi-img-forest" class="canva-image w-full h-48 object-cover rounded-xl mt-4" loading="lazy">
+    </div><!-- Tab 1 -->
+    <div class="tab-panel bg-white rounded-2xl shadow-lg p-6 mb-6 hidden">
+     <h3 data-template-id="materi-section2-title" class="canva-text heading-font mb-3"></h3>
+     <p data-template-id="materi-section2-text" class="canva-text leading-relaxed"></p>
+     <div class="grid grid-cols-2 gap-3 mt-4"><img data-template-id="materi-img-ocean" class="canva-image w-full h-36 object-cover rounded-xl" loading="lazy"> <img data-template-id="materi-img-savanna" class="canva-image w-full h-36 object-cover rounded-xl" loading="lazy">
+     </div>
+    </div><!-- Tab 2 -->
+    <div class="tab-panel bg-white rounded-2xl shadow-lg p-6 mb-6 hidden">
+     <h3 data-template-id="materi-section3-title" class="canva-text heading-font mb-3"></h3>
+     <p data-template-id="materi-section3-text" class="canva-text leading-relaxed"></p>
+    </div><!-- Tab 3 -->
+    <div class="tab-panel bg-white rounded-2xl shadow-lg p-6 mb-6 hidden">
+     <h3 data-template-id="materi-section4-title" class="canva-text heading-font mb-3"></h3>
+     <p data-template-id="materi-section4-text" class="canva-text leading-relaxed"></p>
+    </div><!-- Tab 4 -->
+    <div class="tab-panel bg-white rounded-2xl shadow-lg p-6 mb-6 hidden">
+     <h3 data-template-id="materi-section5-title" class="canva-text heading-font mb-3"></h3>
+     <p data-template-id="materi-section5-text" class="canva-text leading-relaxed"></p>
+    </div>
+    <div class="text-center mt-6"><button data-template-id="btn-mulai-level1" class="canva-button px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition-transform" onclick="goTo(2)"></button>
+    </div>
+   </div>
+  </section><!-- VIEW: LEVEL 1 -->
+  <section id="view-level1" class="view">
+   <div class="max-w-3xl mx-auto px-4 py-8">
+    <h2 data-template-id="level1-title" class="canva-text heading-font text-center mb-2"></h2>
+    <p data-template-id="level1-instruction" class="canva-text text-center mb-6"></p>
+    <div id="l1-score" class="text-center font-bold text-lg mb-4" style="color:#2d6a4f">
+     Skor: 0 / 8
+    </div><!-- Draggable items -->
+    <div id="l1-items" class="flex flex-wrap gap-3 justify-center mb-8"></div><!-- Drop zones -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+     <div class="drop-zone rounded-2xl border-2 border-dashed border-green-400 bg-green-50 p-4" data-category="biotik" id="zone-biotik">
+      <h3 data-template-id="level1-zone-biotik" class="canva-text heading-font text-center mb-3"></h3>
+      <div class="flex flex-wrap gap-2 justify-center" id="zone-biotik-items"></div>
+     </div>
+     <div class="drop-zone rounded-2xl border-2 border-dashed border-amber-400 bg-amber-50 p-4" data-category="abiotik" id="zone-abiotik">
+      <h3 data-template-id="level1-zone-abiotik" class="canva-text heading-font text-center mb-3"></h3>
+      <div class="flex flex-wrap gap-2 justify-center" id="zone-abiotik-items"></div>
+     </div>
+    </div>
+    <div id="l1-complete" class="text-center mt-8 hidden animate-in">
+     <p class="text-xl font-bold mb-4" style="color:#2d6a4f">Level 1 Selesai! 🎉</p><button data-template-id="btn-next-level2" class="canva-button px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition-transform" onclick="goTo(3)"></button>
+    </div>
+   </div>
+  </section><!-- VIEW: LEVEL 2 -->
+  <section id="view-level2" class="view">
+   <div class="max-w-3xl mx-auto px-4 py-8">
+    <h2 data-template-id="level2-title" class="canva-text heading-font text-center mb-2"></h2>
+    <p data-template-id="level2-instruction" class="canva-text text-center mb-6"></p>
+    <div id="l2-score" class="text-center font-bold text-lg mb-4" style="color:#2d6a4f">
+     Skor: 0 / 6
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6" id="l2-board">
+     <div id="l2-terms" class="space-y-3"></div>
+     <div id="l2-defs" class="space-y-3"></div>
+    </div>
+    <div id="l2-complete" class="text-center mt-8 hidden animate-in">
+     <p class="text-xl font-bold mb-4" style="color:#2d6a4f">Level 2 Selesai! 🎉</p><button data-template-id="btn-next-level3" class="canva-button px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition-transform" onclick="goTo(4)"></button>
+    </div>
+   </div>
+  </section><!-- VIEW: LEVEL 3 -->
+  <section id="view-level3" class="view">
+   <div class="max-w-3xl mx-auto px-4 py-8">
+    <h2 data-template-id="level3-title" class="canva-text heading-font text-center mb-2"></h2>
+    <p data-template-id="level3-instruction" class="canva-text text-center mb-4"></p>
+    <div id="l3-counter" class="text-center font-medium mb-2" style="color:#2d6a4f"></div>
+    <div id="l3-score" class="text-center font-bold text-lg mb-6" style="color:#2d6a4f">
+     Skor: 0 / 8
+    </div>
+    <div id="l3-question-area" class="bg-white rounded-2xl shadow-lg p-6"></div>
+    <div id="l3-complete" class="text-center mt-8 hidden animate-in"><button data-template-id="btn-lihat-hasil" class="canva-button px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition-transform" onclick="goTo(5)"></button>
+    </div>
+   </div>
+  </section><!-- VIEW: HASIL -->
+  <section id="view-hasil" class="view">
+   <div class="max-w-3xl mx-auto px-4 py-8">
+    <h2 data-template-id="hasil-title" class="canva-text heading-font text-center mb-8"></h2><!-- Score cards -->
+    <div class="grid grid-cols-3 gap-4 mb-8" id="score-cards">
+     <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-3xl mb-1">
+       🎯
+      </div>
+      <div class="font-bold text-sm" style="color:#2d6a4f">
+       Level 1
+      </div>
+      <div id="sc1" class="text-2xl font-bold mt-1" style="color:#1b4332">
+       0/8
+      </div>
+      <div id="stars1" class="text-yellow-400 mt-1"></div>
+     </div>
+     <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-3xl mb-1">
+       🔗
+      </div>
+      <div class="font-bold text-sm" style="color:#2d6a4f">
+       Level 2
+      </div>
+      <div id="sc2" class="text-2xl font-bold mt-1" style="color:#1b4332">
+       0/6
+      </div>
+      <div id="stars2" class="text-yellow-400 mt-1"></div>
+     </div>
+     <div class="bg-white rounded-2xl shadow p-4 text-center">
+      <div class="text-3xl mb-1">
+       🧠
+      </div>
+      <div class="font-bold text-sm" style="color:#2d6a4f">
+       Level 3
+      </div>
+      <div id="sc3" class="text-2xl font-bold mt-1" style="color:#1b4332">
+       0/8
+      </div>
+      <div id="stars3" class="text-yellow-400 mt-1"></div>
+     </div>
+    </div>
+    <div id="total-score" class="text-center text-2xl font-bold mb-2" style="color:#1b4332"></div>
+    <div id="tier-label" class="text-center text-xl mb-8"></div><!-- Certificate -->
+    <div class="cert-card bg-white rounded-3xl p-8 text-center max-w-lg mx-auto relative"><img data-template-id="cert-bg-img" class="canva-image absolute inset-0 w-full h-full object-cover opacity-10 rounded-3xl" loading="lazy">
+     <div class="relative z-10">
+      <div class="text-4xl mb-2">
+       🏆
+      </div>
+      <h3 data-template-id="sertifikat-title" class="canva-text heading-font mb-1"></h3>
+      <p data-template-id="sertifikat-subtitle" class="canva-text mb-4"></p>
+      <div class="mb-4"><label for="nama-siswa" class="block text-sm font-medium mb-1" style="color:#2d6a4f">Nama Siswa:</label> <input id="nama-siswa" type="text" placeholder="Ketik namamu di sini..." class="border-2 border-green-300 rounded-xl px-4 py-2 text-center text-lg w-full max-w-xs mx-auto focus:outline-none focus:border-green-500">
+      </div>
+      <div id="cert-score-display" class="text-lg font-bold mb-2" style="color:#2d6a4f"></div>
+      <div id="cert-tier" class="text-2xl font-bold mb-4"></div>
+      <p data-template-id="sertifikat-footer" class="canva-text italic"></p>
+     </div>
+    </div>
+    <div class="text-center mt-8"><button data-template-id="btn-ulangi" class="canva-button px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:scale-105 transition-transform" onclick="resetGame()"></button>
+    </div>
+   </div>
+  </section>
+  <script src="/_sdk/editing_sdk.js"></script>
+  <script>
+// State
+let scores = [0, 0, 0];
+let currentView = 0;
+
+// NAVIGATION
+const views = ['view-home','view-materi','view-level1','view-level2','view-level3','view-hasil'];
+
+function goTo(idx) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(views[idx]).classList.add('active');
+    currentView = idx;
+    updateProgress(idx);
+    window.scrollTo(0, 0);
+
+    const pb = document.getElementById('progress-bar');
+    pb.classList.toggle('hidden', idx === 0);
+
+    if (idx === 1) showTab(0);
+    if (idx === 2) initLevel1();
+    if (idx === 3) initLevel2();
+    if (idx === 4) initLevel3();
+    if (idx === 5) showResults();
+}
+
+function updateProgress(idx) {
+    document.querySelectorAll('.progress-step').forEach(s => {
+        const step = parseInt(s.dataset.step);
+        s.classList.remove('completed','current');
+        if (step < idx) s.classList.add('completed');
+        else if (step === idx) s.classList.add('current');
+    });
+}
+
+// TABS
+function showTab(i) {
+    document.querySelectorAll('.tab-panel').forEach((p, idx) => p.classList.toggle('hidden', idx !== i));
+    document.querySelectorAll('.tab-btn').forEach((b, idx) => b.classList.toggle('active', idx === i));
+}
+
+// LEVEL 1: Drag & Drop
+const l1Data = [
+    { name: '🌳 Pohon', cat: 'biotik' },
+    { name: '☀️ Matahari', cat: 'abiotik' },
+    { name: '🐰 Kelinci', cat: 'biotik' },
+    { name: '💧 Air', cat: 'abiotik' },
+    { name: '🌿 Rumput', cat: 'biotik' },
+    { name: '🪨 Tanah', cat: 'abiotik' },
+    { name: '🦅 Elang', cat: 'biotik' },
+    { name: '💨 Udara', cat: 'abiotik' }
+];
+
+function initLevel1() {
+    scores[0] = 0;
+    document.getElementById('l1-score').textContent = 'Skor: 0 / 8';
+    document.getElementById('l1-complete').classList.add('hidden');
+    document.getElementById('zone-biotik-items').innerHTML = '';
+    document.getElementById('zone-abiotik-items').innerHTML = '';
+
+    const container = document.getElementById('l1-items');
+    container.innerHTML = '';
+    const shuffled = [...l1Data].sort(() => Math.random() - 0.5);
+
+    shuffled.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'drag-item px-5 py-3 rounded-xl font-bold text-white shadow-md text-sm';
+        el.style.background = item.cat === 'biotik' ? '#52b788' : '#f8961e';
+        el.textContent = item.name;
+        el.dataset.cat = item.cat;
+        el.dataset.idx = i;
+        setupDrag(el);
+        container.appendChild(el);
+    });
+
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            const idx = e.dataTransfer.getData('text/plain');
+            const dragEl = document.querySelector(`.drag-item[data-idx="${idx}"]`);
+            if (!dragEl) return;
+            handleDrop(dragEl, zone);
+        });
+    });
+}
+
+function setupDrag(el) {
+    el.draggable = true;
+    el.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', el.dataset.idx);
+        el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+    // Touch support
+    let startX, startY, clone;
+    el.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'mouse') return;
+        e.preventDefault();
+        startX = e.clientX; startY = e.clientY;
+        clone = el.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.zIndex = '9999';
+        clone.style.pointerEvents = 'none';
+        clone.style.width = el.offsetWidth + 'px';
+        clone.style.left = (e.clientX - el.offsetWidth/2) + 'px';
+        clone.style.top = (e.clientY - 20) + 'px';
+        document.body.appendChild(clone);
+        el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener('pointermove', e => {
+        if (!clone) return;
+        clone.style.left = (e.clientX - el.offsetWidth/2) + 'px';
+        clone.style.top = (e.clientY - 20) + 'px';
+    });
+    el.addEventListener('pointerup', e => {
+        if (!clone) return;
+        clone.remove(); clone = null;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const zone = target?.closest('.drop-zone');
+        if (zone) handleDrop(el, zone);
+    });
+}
+
+function handleDrop(dragEl, zone) {
+    const correct = dragEl.dataset.cat === zone.dataset.category;
+    if (correct) {
+        scores[0]++;
+        const pill = document.createElement('div');
+        pill.className = 'px-3 py-1 rounded-lg text-white text-sm font-bold animate-pulse';
+        pill.style.background = dragEl.dataset.cat === 'biotik' ? '#2d6a4f' : '#e76f51';
+        pill.textContent = dragEl.textContent;
+        zone.querySelector('[id$="-items"]').appendChild(pill);
+        dragEl.remove();
+        document.getElementById('l1-score').textContent = `Skor: ${scores[0]} / 8`;
+        if (scores[0] === 8) {
+            document.getElementById('l1-complete').classList.remove('hidden');
+        }
+    } else {
+        dragEl.classList.add('animate-shake');
+        setTimeout(() => dragEl.classList.remove('animate-shake'), 400);
+    }
+}
+
+// LEVEL 2: Matching
+const l2Pairs = [
+    { term: 'Produsen', def: 'Makhluk hidup yang menghasilkan makanan sendiri' },
+    { term: 'Konsumen', def: 'Makhluk hidup yang memakan makhluk lain' },
+    { term: 'Dekomposer', def: 'Pengurai sisa-sisa makhluk hidup' },
+    { term: 'Herbivora', def: 'Hewan pemakan tumbuhan' },
+    { term: 'Karnivora', def: 'Hewan pemakan daging' },
+    { term: 'Omnivora', def: 'Hewan pemakan segala' }
+];
+const matchColors = ['#2d6a4f','#f8961e','#e76f51','#3a86ff','#8338ec','#ff006e'];
+let selectedTerm = null;
+
+function initLevel2() {
+    scores[1] = 0;
+    selectedTerm = null;
+    document.getElementById('l2-score').textContent = 'Skor: 0 / 6';
+    document.getElementById('l2-complete').classList.add('hidden');
+
+    const termsC = document.getElementById('l2-terms');
+    const defsC = document.getElementById('l2-defs');
+    termsC.innerHTML = ''; defsC.innerHTML = '';
+
+    const shuffledDefs = [...l2Pairs].sort(() => Math.random() - 0.5);
+
+    l2Pairs.forEach((p, i) => {
+        const t = document.createElement('div');
+        t.className = 'match-term bg-white border-2 border-green-300 rounded-xl px-4 py-3 font-bold text-center';
+        t.style.color = '#1b4332';
+        t.textContent = p.term;
+        t.dataset.idx = i;
+        t.addEventListener('click', () => selectTerm(t));
+        termsC.appendChild(t);
+    });
+
+    shuffledDefs.forEach(p => {
+        const d = document.createElement('div');
+        d.className = 'match-def bg-white border-2 border-amber-300 rounded-xl px-4 py-3 text-sm text-center';
+        d.style.color = '#1b4332';
+        d.textContent = p.def;
+        d.dataset.term = p.term;
+        d.addEventListener('click', () => selectDef(d));
+        defsC.appendChild(d);
+    });
+}
+
+function selectTerm(el) {
+    if (el.classList.contains('matched')) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTerm = el;
+}
+
+function selectDef(el) {
+    if (!selectedTerm || el.classList.contains('matched')) return;
+    const termIdx = parseInt(selectedTerm.dataset.idx);
+    const correct = l2Pairs[termIdx].term === el.dataset.term;
+
+    if (correct) {
+        scores[1]++;
+        const color = matchColors[termIdx];
+        selectedTerm.style.background = color;
+        selectedTerm.style.color = 'white';
+        selectedTerm.style.borderColor = color;
+        selectedTerm.classList.add('matched');
+        selectedTerm.classList.remove('selected');
+        el.style.background = color;
+        el.style.color = 'white';
+        el.style.borderColor = color;
+        el.classList.add('matched');
+        document.getElementById('l2-score').textContent = `Skor: ${scores[1]} / 6`;
+        selectedTerm = null;
+        if (scores[1] === 6) document.getElementById('l2-complete').classList.remove('hidden');
+    } else {
+        el.style.background = '#f8d7da';
+        setTimeout(() => { el.style.background = 'white'; }, 400);
+    }
+}
+
+// LEVEL 3: Quiz
+const quizData = [
+    { q: 'Apa yang dimaksud dengan ekosistem?', opts: ['Kumpulan hewan saja', 'Hubungan timbal balik antara makhluk hidup dengan lingkungannya', 'Tempat hidup tumbuhan', 'Kumpulan tumbuhan saja'], ans: 1, explain: 'Ekosistem adalah hubungan timbal balik antara makhluk hidup (biotik) dengan lingkungannya (abiotik).' },
+    { q: 'Manakah yang termasuk komponen abiotik?', opts: ['Pohon', 'Jamur', 'Air', 'Ikan'], ans: 2, explain: 'Air adalah komponen abiotik (tak hidup). Pohon, jamur, dan ikan adalah komponen biotik (hidup).' },
+    { q: 'Dalam rantai makanan, tumbuhan hijau berperan sebagai?', opts: ['Konsumen I', 'Dekomposer', 'Produsen', 'Konsumen II'], ans: 2, explain: 'Tumbuhan hijau adalah produsen karena dapat membuat makanan sendiri melalui fotosintesis.' },
+    { q: 'Apa yang terjadi jika produsen dalam ekosistem punah?', opts: ['Tidak terjadi apa-apa', 'Konsumen bertambah', 'Seluruh rantai makanan terganggu', 'Dekomposer bertambah'], ans: 2, explain: 'Jika produsen punah, seluruh rantai makanan akan terganggu karena tidak ada sumber makanan dasar.' },
+    { q: 'Contoh ekosistem air tawar adalah?', opts: ['Laut', 'Danau', 'Terumbu karang', 'Pantai'], ans: 1, explain: 'Danau adalah contoh ekosistem air tawar. Laut, terumbu karang, dan pantai termasuk ekosistem air asin.' },
+    { q: 'Hewan yang memakan tumbuhan dan daging disebut?', opts: ['Herbivora', 'Karnivora', 'Omnivora', 'Insektivora'], ans: 2, explain: 'Omnivora adalah hewan pemakan segala (tumbuhan dan daging).' },
+    { q: 'Apa peran dekomposer dalam ekosistem?', opts: ['Memakan hewan lain', 'Menghasilkan oksigen', 'Mengurai sisa makhluk hidup menjadi zat hara', 'Memakan tumbuhan'], ans: 2, explain: 'Dekomposer mengurai sisa-sisa makhluk hidup menjadi zat hara yang dapat digunakan kembali oleh produsen.' },
+    { q: 'Manakah urutan rantai makanan yang benar?', opts: ['Elang → Ular → Tikus → Padi', 'Padi → Tikus → Ular → Elang', 'Tikus → Padi → Elang → Ular', 'Ular → Elang → Padi → Tikus'], ans: 1, explain: 'Urutan yang benar: Padi (produsen) → Tikus (konsumen I) → Ular (konsumen II) → Elang (konsumen III).' }
+];
+let quizIdx = 0;
+
+function initLevel3() {
+    scores[2] = 0; quizIdx = 0;
+    document.getElementById('l3-score').textContent = 'Skor: 0 / 8';
+    document.getElementById('l3-complete').classList.add('hidden');
+    showQuestion();
+}
+
+function showQuestion() {
+    if (quizIdx >= quizData.length) {
+        document.getElementById('l3-question-area').innerHTML = '<p class="text-center text-lg font-bold" style="color:#2d6a4f">Semua soal selesai! 🎉</p>';
+        document.getElementById('l3-complete').classList.remove('hidden');
+        return;
+    }
+    const q = quizData[quizIdx];
+    document.getElementById('l3-counter').textContent = `Soal ${quizIdx + 1} dari 8`;
+
+    const labels = ['A', 'B', 'C', 'D'];
+    let html = `<p class="font-bold text-lg mb-5" style="color:#1b4332">${q.q}</p><div class="space-y-3" id="quiz-opts">`;
+    q.opts.forEach((o, i) => {
+        html += `<div class="quiz-option border-2 border-gray-200 rounded-xl px-5 py-3 font-medium" style="color:#1b4332" data-oi="${i}" onclick="answerQuiz(${i})"><span class="inline-block w-8 h-8 rounded-full bg-gray-100 text-center leading-8 font-bold mr-3 text-sm">${labels[i]}</span>${o}</div>`;
+    });
+    html += '</div><div id="quiz-feedback" class="mt-4 hidden"></div><div id="quiz-next" class="mt-4 hidden text-center"><button class="px-6 py-2 rounded-xl font-bold text-white" style="background:#40916c" onclick="nextQuestion()">Selanjutnya →</button></div>';
+    document.getElementById('l3-question-area').innerHTML = html;
+}
+
+function answerQuiz(i) {
+    const q = quizData[quizIdx];
+    const opts = document.querySelectorAll('.quiz-option');
+    opts.forEach(o => { o.classList.add('disabled'); });
+    if (i === q.ans) {
+        scores[2]++;
+        opts[i].classList.add('correct');
+    } else {
+        opts[i].classList.add('incorrect');
+        opts[q.ans].classList.add('correct');
+    }
+    document.getElementById('l3-score').textContent = `Skor: ${scores[2]} / 8`;
+    const fb = document.getElementById('quiz-feedback');
+    fb.classList.remove('hidden');
+    fb.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-xl p-3 text-sm" style="color:#2d6a4f"><strong>Penjelasan:</strong> ${q.explain}</div>`;
+    document.getElementById('quiz-next').classList.remove('hidden');
+}
+
+function nextQuestion() {
+    quizIdx++;
+    showQuestion();
+}
+
+// RESULTS
+function showResults() {
+    document.getElementById('sc1').textContent = `${scores[0]}/8`;
+    document.getElementById('sc2').textContent = `${scores[1]}/6`;
+    document.getElementById('sc3').textContent = `${scores[2]}/8`;
+    document.getElementById('stars1').textContent = getStars(scores[0], 8);
+    document.getElementById('stars2').textContent = getStars(scores[1], 6);
+    document.getElementById('stars3').textContent = getStars(scores[2], 8);
+
+    const total = scores[0] + scores[1] + scores[2];
+    document.getElementById('total-score').textContent = `Total Skor: ${total} / 22`;
+
+    let tier, emoji;
+    if (total >= 20) { tier = 'Luar Biasa!'; emoji = '🌟'; }
+    else if (total >= 15) { tier = 'Hebat!'; emoji = '⭐'; }
+    else if (total >= 10) { tier = 'Bagus!'; emoji = '👍'; }
+    else { tier = 'Terus Belajar!'; emoji = '💪'; }
+
+    document.getElementById('tier-label').textContent = `${emoji} ${tier}`;
+    document.getElementById('cert-score-display').textContent = `Skor: ${total} / 22`;
+    document.getElementById('cert-tier').textContent = `${emoji} ${tier}`;
+
+    launchConfetti();
+}
+
+function getStars(score, max) {
+    const ratio = score / max;
+    if (ratio >= 0.9) return '★★★';
+    if (ratio >= 0.6) return '★★☆';
+    if (ratio >= 0.3) return '★☆☆';
+    return '☆☆☆';
+}
+
+function launchConfetti() {
+    const colors = ['#f9c74f','#f8961e','#52b788','#3a86ff','#ff006e','#8338ec'];
+    for (let i = 0; i < 60; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.animationDelay = Math.random() * 1.5 + 's';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (6 + Math.random() * 8) + 'px';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 5000);
+    }
+}
+
+function resetGame() {
+    scores = [0, 0, 0];
+    goTo(0);
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+});
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ef9ada74153b5c4',t:'MTc3Njc0NjA4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
